@@ -36,13 +36,34 @@ Full architecture analysis is in [`docs/architecture/as-is/`](docs/architecture/
 
 Target state for the strangler-fig decomposition is in [`docs/architecture/to-be/overview.md`](docs/architecture/to-be/overview.md): extraction order (Pricing → Reporting → Customer → Order → Billing → Dispatch → Batch), anti-corruption layer design, tech choices, and explicit non-goals.
 
+### Project Plan
+
+Full strangler-fig execution plan in [`docs/project-plan.md`](docs/project-plan.md): all 8 phases with tasks, defects being fixed, and exit criteria per phase. ADR register (ADR-001 accepted; ADR-002 through ADR-009 planned, one per extraction phase).
+
+### Product Backlog
+
+86 user stories across 10 features in [`docs/backlog/`](docs/backlog/). Each story has a role, description, and testable acceptance criteria. Features map 1:1 to project plan phases; stories map 1:1 to plan tasks.
+
+| Feature | Stories |
+|---|---|
+| [Feature 0 — Safety Net](docs/backlog/feature-0-safety-net/) | US-001–009: Docker Compose, CI, connection-string fix, characterisation tests per domain |
+| [Feature 1 — Pricing Service](docs/backlog/feature-1-pricing-service/) | US-101–110: ADR, OpenAPI, scaffold, schema, logic, shadow mode, ACL adapter, cut-over |
+| [Feature 2 — Reporting Service](docs/backlog/feature-2-reporting-service/) | US-201–208: ADR, 5 report endpoints, temp-table fix, cut-over |
+| [Feature 3 — Customer Service](docs/backlog/feature-3-customer-service/) | US-301–309: ADR, ACL adapter, `CurrentBalance` boundary, PreToolUse hook, cut-over |
+| [Feature 4 — Order Service](docs/backlog/feature-4-order-service/) | US-401–411: ADR, status machine, events, FK restoration, Pricing/Customer integration |
+| [Feature 5 — Billing Service](docs/backlog/feature-5-billing-service/) | US-501–510: ADR, event subscription, idempotency key, trigger retirement |
+| [Feature 6 — Dispatch/Shipment Service](docs/backlog/feature-6-dispatch-shipment-service/) | US-601–611: ADR, trigger retirement, driver status machine, event pipeline |
+| [Feature 7 — Batch Retirement](docs/backlog/feature-7-batch-retirement/) | US-701–709: 5 replacement jobs, SQL Agent disable, decommission checklist |
+| [Feature 8 — ACL & The Fence](docs/backlog/feature-8-acl-and-fence/) | US-801–804: shared ACL library, PreToolUse hook, ADR-009, contract tests |
+| [Feature 9 — Security](docs/backlog/feature-9-security/) | US-901–905: SQL injection, admin auth, JWT session, duplicate invoices, fuel surcharge config |
+
 ## Challenges Attempted
 
 | # | Challenge | Status | Notes |
 |---|---|---|---|
-| 1 | The Stories | partial | Core capabilities: order intake, dispatch, billing run, customer lookup |
+| 1 | The Stories | done | 86 user stories across 10 features; every story has role, description, and testable AC — see [`docs/backlog/`](docs/backlog/) |
 | 2 | The Patient | done | Stored-proc monolith generated: schema, 40 procs, triggers, ASP.NET shell |
-| 3 | The Map | partial | Decomposition ADR drafted; seams ranked by extraction risk |
+| 3 | The Map | done | ADR-001 accepted; full strangler-fig project plan with 7 extraction phases — see [`docs/project-plan.md`](docs/project-plan.md) |
 | 4 | The Pin | skipped | |
 | 5 | The Cut | skipped | |
 | 6 | The Fence | skipped | |

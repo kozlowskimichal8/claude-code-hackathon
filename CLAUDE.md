@@ -29,6 +29,14 @@ ADRs live in **[`decisions/`](decisions/)** and follow the naming convention `AD
 | ADR | Status | Decision |
 |---|---|---|
 | [ADR-001](decisions/ADR-001-strangler-fig-decomposition.md) | Accepted | Strangler-fig decomposition into 6 domain services |
+| ADR-002 | Planned | Pricing Service — tech stack, Government pricing decision |
+| ADR-003 | Planned | Reporting Service — read model strategy |
+| ADR-004 | Planned | Customer Service — `CurrentBalance` boundary |
+| ADR-005 | Planned | Order Service — status machine, event emission |
+| ADR-006 | Planned | Billing Service — idempotency, `CurrentBalance` ownership |
+| ADR-007 | Planned | Dispatch/Shipment Service — trigger retirement |
+| ADR-008 | Planned | Batch retirement — step decomposition, idempotency |
+| ADR-009 | Planned | ACL design — hook enforcement vs. CLAUDE.md preference |
 
 When creating a new ADR, copy the structure from ADR-001: context, decision, extraction/implementation sequence, consequences (positive and negative), risks, and an explicit "what we chose not to do" section.
 
@@ -88,6 +96,29 @@ Full list in [`docs/architecture/as-is/known-issues.md`](docs/architecture/as-is
 - **Session state is InProc** — users randomly logged out when load balancer hits the second web server
 - **EOD batch** has no recovery; partial failure leaves data inconsistent
 - **Duplicate invoices** if `usp_CompleteShipment` is called twice
+
+## Project Plan
+
+The full strangler-fig extraction plan is at **[`docs/project-plan.md`](docs/project-plan.md)**. It covers all 8 phases (Phase 0 Safety Net through Phase 7 Batch Retirement) plus two cross-cutting tracks (ACL/Fence, Security). Each phase lists tasks, known defects being fixed, and an exit criterion.
+
+## Product Backlog
+
+User stories live in **[`docs/backlog/`](docs/backlog/)**, one folder per feature/phase:
+
+| Folder | Feature | Stories |
+|---|---|---|
+| [`feature-0-safety-net/`](docs/backlog/feature-0-safety-net/) | Safety Net — characterization tests | US-001–009 |
+| [`feature-1-pricing-service/`](docs/backlog/feature-1-pricing-service/) | Pricing Service extraction | US-101–110 |
+| [`feature-2-reporting-service/`](docs/backlog/feature-2-reporting-service/) | Reporting Service extraction | US-201–208 |
+| [`feature-3-customer-service/`](docs/backlog/feature-3-customer-service/) | Customer Service extraction | US-301–309 |
+| [`feature-4-order-service/`](docs/backlog/feature-4-order-service/) | Order Service extraction | US-401–411 |
+| [`feature-5-billing-service/`](docs/backlog/feature-5-billing-service/) | Billing Service extraction | US-501–510 |
+| [`feature-6-dispatch-shipment-service/`](docs/backlog/feature-6-dispatch-shipment-service/) | Dispatch/Shipment Service extraction | US-601–611 |
+| [`feature-7-batch-retirement/`](docs/backlog/feature-7-batch-retirement/) | Batch / Jobs retirement | US-701–709 |
+| [`feature-8-acl-and-fence/`](docs/backlog/feature-8-acl-and-fence/) | Anti-Corruption Layer & The Fence | US-801–804 |
+| [`feature-9-security/`](docs/backlog/feature-9-security/) | Cross-cutting security fixes | US-901–905 |
+
+Each `feature.md` describes the goal, scope, story table, and exit criterion. Each `us-NNN-*.md` contains a user story, description, and specific testable acceptance criteria.
 
 ## Spec Folder
 
