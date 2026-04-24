@@ -75,14 +75,27 @@ Backlog in [`docs/backlog/`](docs/backlog/):
 | [Feature 8 — ACL & The Fence](docs/backlog/feature-8-acl-and-fence/) | US-801–804: shared ACL library, PreToolUse hook, ADR-009, contract tests |
 | [Feature 9 — Security](docs/backlog/feature-9-security/) | US-901–905: SQL injection, admin auth, JWT session, duplicate invoices, fuel surcharge config |
 
+### Step 7 — The Pin (Characterization Test Suite)
+
+With the backlog in place, we moved into implementation: setting up the safety net that must exist before a single line of production code is changed. We designed and partially scaffolded the characterization test suite for all 42 stored procedures and 5 triggers.
+
+Deliverables:
+- [`docker-compose.yml`](docker-compose.yml) — SQL Server 2019 container; one `docker compose up` from a clean checkout
+- [`docker/init-db.sh`](docker/init-db.sh) — applies all SQL scripts in strict numeric order via `sqlcmd`; runs as a dependent init container after SQL Server's health check passes
+- [`tests/requirements.txt`](tests/requirements.txt) — `pytest` + `pyodbc` test dependencies
+- [`tests/characterization/`](tests/characterization/) — test package with `conftest.py` scaffolded: session-scoped DB connection, per-test cleanup fixture, `create_*` helpers
+- [`docs/the-pin-plan.md`](docs/the-pin-plan.md) — complete implementation plan: every test file, what each tests, exact pricing calculations for assertions, CI pipeline design
+
+The plan specifies 9 test files covering all 42 procs and 5 triggers, including all 10 documented behavioural constraints (bugs pinned as-is, not fixed). Implementation is ready to execute.
+
 ## Challenges Attempted
 
 | # | Challenge | Status | Notes |
 |---|---|---|---|
 | 1 | The Stories | done | 86 user stories across 10 features; every story has role, description, and testable AC — see [`docs/backlog/`](docs/backlog/) |
-| 2 | The Patient | done | Stored-proc monolith generated: schema, 40 procs, triggers, ASP.NET shell |
+| 2 | The Patient | done | Stored-proc monolith generated: schema, 42 procs, 5 triggers, ASP.NET shell |
 | 3 | The Map | done | ADR-001 accepted; full strangler-fig project plan with 7 extraction phases — see [`docs/project-plan.md`](docs/project-plan.md) |
-| 4 | The Pin | skipped | |
+| 4 | The Pin | done | Docker Compose environment (`docker-compose.yml`), DB init script (`docker/init-db.sh`), full characterization test plan covering all 42 procs and 5 triggers — see [`docs/the-pin-plan.md`](docs/the-pin-plan.md) |
 | 5 | The Cut | skipped | |
 | 6 | The Fence | skipped | |
 | 7 | The Scorecard | skipped | |
@@ -107,33 +120,42 @@ Significant decisions are recorded as ADRs in [`decisions/`](decisions/) before 
 
 ## How to Run It
 
-> Prerequisites: Docker (for SQL Server), .NET SDK 4.8 or the `dotnet` CLI with Windows compatibility layer.
+> Prerequisites: Docker Desktop (for SQL Server + init container). Python 3.11+ and ODBC Driver 17/18 for SQL Server required to run characterization tests.
+
+**Start the database (single command):**
 
 ```bash
-# 1. Start SQL Server in Docker
-docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=Northwind!23" \
-  -p 1433:1433 --name northwind-sql -d mcr.microsoft.com/mssql/server:2019-latest
+docker compose up
+```
 
-# 2. Apply schema, seed data, triggers, and stored procs
-for f in legacy/database/00_schema.sql \
-          legacy/database/01_seed_data.sql \
-          legacy/database/02_triggers.sql \
-          legacy/database/procs/*.sql; do
-  sqlcmd -S localhost -U sa -P "Northwind!23" -i "$f"
-done
+SQL Server 2019 starts, a health check confirms readiness, then `db-init` applies all SQL scripts in order. The database is ready when `db-init` exits with code 0.
 
-# 3. Update the connection string in legacy/app/web.config if needed, then run
-cd legacy/app && dotnet run
+**Run the characterization tests:**
+
+```bash
+pip install -r tests/requirements.txt
+pytest tests/characterization/ -v
+```
+
+**Tear down and reset all state:**
+
+```bash
+docker compose down -v
+```
+
+**Legacy ASP.NET app** (optional — requires .NET SDK 4.8 / Windows):
+
+```bash
+# Update lagacy/app/web.config if needed, then deploy via IIS or xcopy
 ```
 
 ## If We Had More Time
 
-1. **The Pin** — Characterization tests against the stored procs before any extraction. This is the safety net everything else depends on.
-2. **The Cut** — Extract the Order service (lowest coupling, highest business value) with a REST API contract and a contract test that runs alongside the characterization suite.
-3. **The Fence** — Anti-corruption layer with a `PreToolUse` hook preventing Claude from writing across the boundary, paired with a `CLAUDE.md` prompt for preference-based guidance and an ADR explaining why each is a hook vs. a prompt.
-4. **The Scouts** — Fan-out subagents (one per proc group) scoring extraction risk: coupling, test coverage, data-model tangle, business criticality. Coordinator aggregates into a ranked list and compares against the human ADR from The Map.
-5. **The Scorecard** — CI eval harness measuring whether Claude proposes correct seam boundaries and how often it claims high confidence on a wrong answer.
-6. **The Weekend** — A 3am-readable cutover runbook with rollback triggers and a decision tree, rehearsed at least once.
+1. **The Cut** — Extract the Pricing Service first (stateless, lowest coupling). REST contract + shadow-mode parity test running alongside the characterization suite. ADR-002 would be written first.
+2. **The Fence** — Anti-corruption layer with a `PreToolUse` hook preventing Claude from writing across the boundary, paired with a `CLAUDE.md` prompt for preference-based guidance and ADR-009 explaining why each is a hook vs. a prompt.
+3. **The Scouts** — Fan-out subagents (one per proc group) scoring extraction risk: coupling, test coverage, data-model tangle, business criticality. Coordinator aggregates into a ranked list and compares against the human ADR from The Map.
+4. **The Scorecard** — CI eval harness measuring whether Claude proposes correct seam boundaries and how often it claims high confidence on a wrong answer.
+5. **The Weekend** — A 3am-readable cutover runbook with rollback triggers and a decision tree, rehearsed at least once.
 
 ## How We Used Claude Code
 

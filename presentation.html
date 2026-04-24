@@ -645,7 +645,51 @@
     </div>
   </div>
 
-  <!-- SLIDE 10: Challenges Status -->
+  <!-- SLIDE 10: The Pin -->
+  <div class="slide">
+    <div class="eyebrow">Challenge 4 — The Pin</div>
+    <h2>Characterization Tests Before Any Extraction</h2>
+    <div class="cols">
+      <div class="col">
+        <p style="margin-bottom:20px">The safety net that makes everything else reversible. Before anyone touches a proc, <strong style="color:var(--text)">every observable behaviour must be pinned</strong> — bugs included — so that a future extraction is caught immediately if it changes anything.</p>
+        <div class="grid grid-2" style="margin-bottom:20px">
+          <div class="card accent-border">
+            <div class="eyebrow" style="font-size:10px">Coverage</div>
+            <strong style="font-size:22px;color:var(--accent)">42</strong><span style="color:var(--muted);font-size:13px"> procs</span><br>
+            <strong style="font-size:22px;color:var(--accent)">5</strong><span style="color:var(--muted);font-size:13px"> triggers</span><br>
+            <strong style="font-size:22px;color:var(--accent)">10</strong><span style="color:var(--muted);font-size:13px"> behavioural constraints</span>
+          </div>
+          <div class="card green-border">
+            <div class="eyebrow" style="font-size:10px">Stack</div>
+            <span style="color:var(--muted);font-size:13px">SQL Server 2019 in Docker</span><br>
+            <span style="color:var(--muted);font-size:13px">Python · pytest · pyodbc</span><br>
+            <span style="color:var(--muted);font-size:13px">GitHub Actions CI</span>
+          </div>
+        </div>
+        <div class="code" style="font-size:12px">docker compose up       # SQL Server + init scripts
+pytest tests/characterization/ -v  # 9 test files</div>
+      </div>
+      <div class="col">
+        <h3 style="font-size:15px;margin-bottom:12px">Test Files</h3>
+        <table style="font-size:12px">
+          <thead><tr><th>File</th><th>Domain</th></tr></thead>
+          <tbody>
+            <tr><td><code>test_behavioral_constraints.py</code></td><td>10 cross-cutting constraints</td></tr>
+            <tr><td><code>test_customer_domain.py</code></td><td>5 procs, credit-limit, SQL inj.</td></tr>
+            <tr><td><code>test_order_domain.py</code></td><td>8 procs, full state machine</td></tr>
+            <tr><td><code>test_pricing_domain.py</code></td><td>4 types × tiers × priority × hazmat</td></tr>
+            <tr><td><code>test_dispatch_domain.py</code></td><td>6 procs, LOA gap, dup licence</td></tr>
+            <tr><td><code>test_shipment_domain.py</code></td><td>6 procs, global temp table note</td></tr>
+            <tr><td><code>test_billing_domain.py</code></td><td>7 procs, duplicate invoice bug</td></tr>
+            <tr><td><code>test_reporting_domain.py</code></td><td>5 report procs, column shapes</td></tr>
+            <tr><td><code>test_batch_domain.py</code></td><td>EOD, archive, cleanup, indexes</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 11: Challenges Status -->
   <div class="slide">
     <div class="eyebrow">Challenges</div>
     <h2>What We Completed</h2>
@@ -681,35 +725,39 @@
               <td></td>
               <td colspan="2" style="color:var(--muted);font-size:12px">ADR-001 accepted · full strangler-fig plan · 7 extraction phases · explicit non-goals</td>
             </tr>
-            <tr style="opacity:0.4">
+            <tr>
               <td>4</td>
-              <td>The Pin</td>
-              <td><span class="badge">skipped</span></td>
+              <td><strong>The Pin</strong></td>
+              <td><span class="badge badge-green">done</span></td>
+            </tr>
+            <tr>
+              <td></td>
+              <td colspan="2" style="color:var(--muted);font-size:12px">Docker Compose env · 9 test files planned · 42 procs + 5 triggers coverage · CI pipeline</td>
             </tr>
             <tr style="opacity:0.4">
               <td>5</td>
               <td>The Cut</td>
-              <td><span class="badge">skipped</span></td>
+              <td><span class="badge">next</span></td>
             </tr>
             <tr style="opacity:0.4">
               <td>6</td>
               <td>The Fence</td>
-              <td><span class="badge">skipped</span></td>
+              <td><span class="badge">planned</span></td>
             </tr>
             <tr style="opacity:0.4">
               <td>7</td>
               <td>The Scorecard</td>
-              <td><span class="badge">skipped</span></td>
+              <td><span class="badge">planned</span></td>
             </tr>
             <tr style="opacity:0.4">
               <td>8</td>
               <td>The Weekend</td>
-              <td><span class="badge">skipped</span></td>
+              <td><span class="badge">planned</span></td>
             </tr>
             <tr style="opacity:0.4">
               <td>9</td>
               <td>The Scouts</td>
-              <td><span class="badge">skipped</span></td>
+              <td><span class="badge">planned</span></td>
             </tr>
           </tbody>
         </table>
@@ -717,12 +765,8 @@
       <div class="col">
         <h3>Next Priorities</h3>
         <div class="step-row" style="margin-bottom:16px">
-          <div class="step-num" style="border-color:var(--orange);color:var(--orange)">4</div>
-          <div class="step-content"><strong>The Pin</strong><p style="font-size:13px">Characterization tests against all 42 procs before any extraction. This is the safety net everything else depends on.</p></div>
-        </div>
-        <div class="step-row" style="margin-bottom:16px">
           <div class="step-num" style="border-color:var(--orange);color:var(--orange)">5</div>
-          <div class="step-content"><strong>The Cut</strong><p style="font-size:13px">Extract Pricing Service first (lowest coupling). REST contract + contract test running alongside characterization suite.</p></div>
+          <div class="step-content"><strong>The Cut</strong><p style="font-size:13px">Extract Pricing Service first (lowest coupling). REST contract + shadow-mode parity against the characterization suite. ADR-002 written first.</p></div>
         </div>
         <div class="step-row" style="margin-bottom:16px">
           <div class="step-num" style="border-color:var(--orange);color:var(--orange)">6</div>
@@ -736,7 +780,7 @@
     </div>
   </div>
 
-  <!-- SLIDE 11: How We Used Claude Code -->
+  <!-- SLIDE 12: How We Used Claude Code -->
   <div class="slide">
     <div class="eyebrow">Reflection</div>
     <h2>How We Used Claude Code</h2>
@@ -774,7 +818,7 @@
     </div>
   </div>
 
-  <!-- SLIDE 12: Summary -->
+  <!-- SLIDE 13: Summary -->
   <div class="slide">
     <div class="eyebrow">Summary</div>
     <h2>What We Built in One Session</h2>
@@ -782,7 +826,7 @@
       <div class="card"><div class="stat"><div class="num">42</div><div class="label">Stored Procs Generated</div></div></div>
       <div class="card"><div class="stat"><div class="num">5</div><div class="label">Architecture Docs</div></div></div>
       <div class="card"><div class="stat"><div class="num">86</div><div class="label">User Stories</div></div></div>
-      <div class="card"><div class="stat"><div class="num">9</div><div class="label">ADRs Planned</div></div></div>
+      <div class="card"><div class="stat"><div class="num">4</div><div class="label">Challenges Done</div></div></div>
     </div>
     <div class="grid grid-2">
       <div class="card accent-border">
@@ -796,6 +840,8 @@
           <div class="pill done">8-phase project plan</div>
           <div class="pill done">10-feature backlog</div>
           <div class="pill done">86 user stories</div>
+          <div class="pill done">Docker Compose + DB init</div>
+          <div class="pill done">Characterization test plan</div>
         </div>
       </div>
       <div class="card green-border">
@@ -814,7 +860,7 @@
 
 <div class="nav">
   <button onclick="go(-1)">← Prev</button>
-  <span class="counter" id="counter">1 / 12</span>
+  <span class="counter" id="counter">1 / 13</span>
   <button onclick="go(1)">Next →</button>
 </div>
 

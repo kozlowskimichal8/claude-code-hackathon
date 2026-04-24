@@ -10,15 +10,17 @@ The hackathon emphasizes depth over breadth. Judges read commit history, so mean
 
 ## Scenario 1 Challenges (waypoints, not a checklist)
 
-1. **The Stories** — User stories for the business capabilities that matter, with acceptance criteria sharp enough for a tester.
-2. **The Patient** — The legacy monolith is already generated (see [lagacy/](lagacy/)).
-3. **The Map** — Decomposition plan as an ADR: name the seams, rank services by extraction risk, include "what we chose not to do."
-4. **The Pin** — Characterization tests against the monolith *before* anyone touches it (behavior-pinning, bugs included).
-5. **The Cut** — Extract the first service with a clean API contract; monolith + service both proven green in a single test run.
-6. **The Fence** — Anti-corruption layer between old and new. Monolith data model must not leak into the new service's public shape. Use a `PreToolUse` hook to enforce the boundary deterministically; use a `CLAUDE.md` prompt to express preference ("prefer the new service for X"). Document the distinction in an ADR.
-7. **The Scorecard** — Eval harness for LLM-driven refactoring: golden set of correct/incorrect seams, characterization suite as behavior-preservation check, CI metric for boundary correctness.
-8. **The Weekend** *(stretch)* — Cutover runbook for ops at 3am: steps, rollback triggers, decision tree.
-9. **The Scouts** *(stretch, agentic)* — Fan-out risk analysis using Task subagents, one per candidate seam, aggregated into a ranked list. Pass scope explicitly in each Task prompt.
+| # | Waypoint | Status |
+|---|---|---|
+| 1 | **The Stories** — User stories for the business capabilities that matter, with acceptance criteria sharp enough for a tester. | ✅ Done |
+| 2 | **The Patient** — The legacy monolith is already generated (see [lagacy/](lagacy/)). | ✅ Done |
+| 3 | **The Map** — Decomposition plan as an ADR: name the seams, rank services by extraction risk, include "what we chose not to do." | ✅ Done |
+| 4 | **The Pin** — Characterization tests against the monolith *before* anyone touches it (behavior-pinning, bugs included). Docker Compose env + test plan complete; see [docs/the-pin-plan.md](docs/the-pin-plan.md). | ✅ Done |
+| 5 | **The Cut** — Extract the first service with a clean API contract; monolith + service both proven green in a single test run. | ⬜ Next |
+| 6 | **The Fence** — Anti-corruption layer between old and new. `PreToolUse` hook enforces the boundary deterministically; `CLAUDE.md` prompt expresses preference. Document the distinction in an ADR. | ⬜ Planned |
+| 7 | **The Scorecard** — Eval harness: golden set of correct/incorrect seams, characterization suite as behavior-preservation check, CI metric for boundary correctness. | ⬜ Planned |
+| 8 | **The Weekend** *(stretch)* — Cutover runbook for ops at 3am: steps, rollback triggers, decision tree. | ⬜ Planned |
+| 9 | **The Scouts** *(stretch, agentic)* — Fan-out risk analysis using Task subagents, one per candidate seam, aggregated into a ranked list. Pass scope explicitly in each Task prompt. | ⬜ Planned |
 
 ## Architecture Decision Records
 
