@@ -20,6 +20,18 @@ Northwind Logistics runs on a classic stored-procedure architecture: 40+ T-SQL p
 
 We generated the full legacy system (schema, seed data, triggers, stored procs, and thin ASP.NET app) as a realistic starting point. From there we applied a strangler-fig decomposition strategy: identify seams in the stored-proc surface, characterize the existing behavior before touching anything, then extract the first clean service behind an API façade — leaving the monolith intact and testable on every commit.
 
+### As-Is Architecture Documentation
+
+Full architecture analysis is in [`docs/architecture/as-is/`](docs/architecture/as-is/):
+
+| Document | Contents |
+|---|---|
+| [`overview.md`](docs/architecture/as-is/overview.md) | Infrastructure diagram, tech stack, deployment model |
+| [`data-model.md`](docs/architecture/as-is/data-model.md) | All 10 tables, relationships, integrity gaps |
+| [`application-layer.md`](docs/architecture/as-is/application-layer.md) | Web pages, data-access patterns, full proc/trigger inventory |
+| [`business-flows.md`](docs/architecture/as-is/business-flows.md) | Order lifecycle, pricing formula, EOD batch, billing flow |
+| [`known-issues.md`](docs/architecture/as-is/known-issues.md) | Security vulns, data integrity bugs, performance problems, tech debt |
+
 ## Challenges Attempted
 
 | # | Challenge | Status | Notes |
@@ -54,15 +66,15 @@ docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=Northwind!23" \
   -p 1433:1433 --name northwind-sql -d mcr.microsoft.com/mssql/server:2019-latest
 
 # 2. Apply schema, seed data, triggers, and stored procs
-for f in lagacy/database/00_schema.sql \
-          lagacy/database/01_seed_data.sql \
-          lagacy/database/02_triggers.sql \
-          lagacy/database/procs/*.sql; do
+for f in legacy/database/00_schema.sql \
+          legacy/database/01_seed_data.sql \
+          legacy/database/02_triggers.sql \
+          legacy/database/procs/*.sql; do
   sqlcmd -S localhost -U sa -P "Northwind!23" -i "$f"
 done
 
-# 3. Update the connection string in lagacy/app/web.config if needed, then run
-cd lagacy/app && dotnet run
+# 3. Update the connection string in legacy/app/web.config if needed, then run
+cd legacy/app && dotnet run
 ```
 
 ## If We Had More Time

@@ -22,6 +22,16 @@ The hackathon emphasizes depth over breadth. Judges read commit history, so mean
 
 ## Legacy Application Architecture
 
+Full as-is architecture analysis lives in **[`docs/architecture/as-is/`](docs/architecture/as-is/)**. Read those documents before making any changes to the legacy system. Summary below.
+
+| Document | What it covers |
+|---|---|
+| [`overview.md`](docs/architecture/as-is/overview.md) | Infrastructure diagram, tech stack, deployment model |
+| [`data-model.md`](docs/architecture/as-is/data-model.md) | All 10 tables, relationships, integrity gaps |
+| [`application-layer.md`](docs/architecture/as-is/application-layer.md) | Web pages, data-access patterns, full proc/trigger inventory |
+| [`business-flows.md`](docs/architecture/as-is/business-flows.md) | Order lifecycle, pricing formula, EOD batch, billing flow |
+| [`known-issues.md`](docs/architecture/as-is/known-issues.md) | Security vulns, data integrity bugs, performance problems, tech debt |
+
 The legacy app is a **database-centric ASP.NET 4.5 WebForms monolith** with SQL Server 2008 R2. About 80% of business logic lives in T-SQL stored procedures, not in application code.
 
 ### Key layers
@@ -33,27 +43,33 @@ The legacy app is a **database-centric ASP.NET 4.5 WebForms monolith** with SQL 
   - `Admin/EndOfDay.aspx` — EOD batch with no auth check and no recovery mechanism
 - **[lagacy/database/](lagacy/database/)** — SQL scripts; run manually in numeric order
   - `00_schema.sql` → `01_seed_data.sql` → `02_triggers.sql` → then `procs/01_*` through `procs/07_*`
-- **[lagacy/docs/SYSTEM_NOTES.txt](lagacy/docs/SYSTEM_NOTES.txt)** — authoritative architecture notes and known issues (last updated Nov 2021)
+- **[lagacy/docs/SYSTEM_NOTES.txt](lagacy/docs/SYSTEM_NOTES.txt)** — original architecture notes and known issues (last updated Nov 2021)
 
 ### Database domain model
 
 Six core domains with clear seams for extraction: **Customers**, **Orders**, **Shipments**, **Drivers/Vehicles**, **Billing**, **Reporting**.
 
-Customer types: `R`=Regular, `P`=Premium, `C`=Contract, `G`=Government (unsupported — pricing falls back to a manual Finance workaround).
+Customer types: `R`=Regular, `P`=Premium, `C`=Contract, `G`=Government (unsupported — pricing falls back to Regular rates; Finance adjusts invoices manually).
 
-Order status flow: `Pending → Assigned → PickedUp → InTransit → Delivered`.
+Order status flow: `Pending → Assigned → PickedUp → InTransit → Delivered / Failed`. Also: `Cancelled`, `OnHold`.
 
-## Known Critical Issues (from SYSTEM_NOTES.txt)
+### Triggers (side-effects to be aware of)
 
-These are documented bugs — relevant context before refactoring:
+- `TR_Shipments_AutoUpdateOrderStatus` — mirrors every shipment status change back to the parent order; removal was attempted in 2016 and broke everything
+- `TR_Orders_AuditStatusChange` — fires on every Orders UPDATE (not just status changes), writes to `AuditLog`
+- `TR_Invoices_UpdateBalance` — recalculates `Customers.CurrentBalance` from scratch on every invoice insert/update
 
-- **SQL injection** in `usp_SearchCustomers` and `usp_SearchOrders` via the `@SortBy` parameter (dynamic SQL, unparameterized)
-- **Race condition** in `usp_GetActiveShipments` — uses a global temp table (`##ActiveShipments`), breaks under concurrent dispatchers
-- **Connection string duplicated** in three files: `web.config`, `DBHelper.cs`, `EndOfDay.aspx.cs`
-- **Session state is InProc** — users are randomly logged out when the load balancer hits the second web server
-- **EOD batch** (`usp_EndOfDayProcessing`) has no recovery; partial failure leaves the system in an inconsistent state
-- **Duplicate invoices** if `usp_CompleteShipment` is called twice (idempotency not enforced)
-- **`usp_GenerateMonthlyStatements`** takes ~45 seconds (cursor-based; needs set-based rewrite)
+## Known Critical Issues
+
+Full list in [`docs/architecture/as-is/known-issues.md`](docs/architecture/as-is/known-issues.md). Highest-priority items before any refactoring:
+
+- **SQL injection** in `usp_SearchCustomers` and `usp_SearchOrders` via `@SortBy` (dynamic SQL, no whitelist) — NWL-389
+- **Race condition** in `usp_GetActiveShipments` — global temp table (`##`) breaks under concurrent dispatchers
+- **No auth check** on `Admin/EndOfDay.aspx` — any user who knows the URL can trigger EOD or rebuild indexes — NWL-441
+- **Connection string duplicated** in three files: `web.config`, `Orders/NewOrder.aspx.cs`, `Admin/EndOfDay.aspx.cs`
+- **Session state is InProc** — users randomly logged out when load balancer hits the second web server
+- **EOD batch** has no recovery; partial failure leaves data inconsistent
+- **Duplicate invoices** if `usp_CompleteShipment` is called twice
 
 ## Spec Folder
 
