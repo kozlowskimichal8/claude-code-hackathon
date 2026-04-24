@@ -1,0 +1,121 @@
+NORTHWIND LOGISTICS - SYSTEM NOTES
+===================================
+Last updated: November 2021 (someone put this in SharePoint after that,
+but then SharePoint was migrated and the newer notes were lost)
+
+ARCHITECTURE OVERVIEW
+---------------------
+- SQL Server 2008 R2 on NWLSQL01 (physical box, in server room B)
+  * 32GB RAM, 8 core, 2TB RAID-5
+  * Weekly full backup to NAS, daily differentials
+  * Transaction log backup every 4 hours (was every hour, changed 2018 to reduce I/O)
+  * SQL Agent jobs: EOD batch (11:30 PM), index rebuild (Sunday 2 AM)
+  * sa password: "ChangeMe2009!" (yes, the default was changed, barely)
+  * Monitoring: none. We know if it's down because people call.
+
+- IIS 7.5 on NWLWEB01 and NWLWEB02 (two web servers added 2018 when WEB01 was slow)
+  * Session is InProc - session is lost if load balancer routes to other server
+  * Load balancer set to sticky sessions but it's unreliable
+  * App pool: .NET 4.5 Classic pipeline. Integrated was "too many bugs".
+  * Physical path: C:\inetpub\wwwroot\NWL\
+  * Deployments: xcopy from developer laptop. No CI/CD. "Too complex to set up."
+
+- fileserver01: proof-of-delivery images, Word docs, old reports
+  * \\fileserver01\pod\ = POD images (scanned by drivers)
+  * \\fileserver01\reports\ = monthly report archives (Excel)
+  * \\fileserver01\docs\ = this folder's older cousin
+
+KNOWN ISSUES (as of Nov 2021)
+------------------------------
+1. Session doesn't persist across web servers. Users get logged out randomly.
+   Fix: Set up SQL Session state or Redis. Ticket open 3 years.
+
+2. usp_GetActiveShipments uses ##global temp table. Multiple dispatchers cause errors.
+   Fix: Use #local temp table or rewrite as set-based. "Low priority."
+
+3. EOD batch has no recovery mechanism. If it fails at Step 3, Steps 1-2 already ran.
+   Fix: Add idempotency checks to each step. "Planned for v5.0."
+
+4. Admin page has no auth check. JIRA NWL-441.
+   Fix: Add role check. "Blocked waiting for IT to set up AD groups."
+
+5. Connection string duplicated in 3 files. Changes to password require 3 updates.
+   Fix: Move to environment variable or secrets manager. "Dev priority."
+
+6. Amy Schultz's driver license expired. Assignment proc doesn't check.
+   Fix: Add license expiry check to usp_AssignDriver. Assigned to T.Wu.
+   Status: T.Wu left the company. Reassigned to nobody.
+
+7. Monthly statement proc takes 45 seconds for large customers.
+   Fix: Rewrite with set-based approach. 2019 attempt abandoned.
+
+8. OrderItems orphaned after archival (order deleted, items stay).
+   Fix: Restore FK, or add delete in archival proc. "Low priority."
+
+9. Pricing for Government customers uses Regular rates.
+   Fix: Add 'G' pricing rules to PricingRules table and update proc.
+   Workaround: Finance manually adjusts invoices for govt customers.
+
+10. Duplicate invoices if usp_CompleteShipment called twice.
+    Fix: Add idempotency guard in usp_CreateInvoice. Post-2021 duplicate count: 7.
+
+11. usp_SearchCustomers and usp_SearchOrders have SQL injection via @SortBy.
+    Fix: Whitelist sort columns. JIRA NWL-389 (Open, Low priority).
+    Risk: "Only internal users, protected by VPN." VPN was breached in 2020.
+
+DEPLOYMENT NOTES
+----------------
+1. Run SQL scripts in this order:
+   00_schema.sql
+   01_seed_data.sql
+   02_triggers.sql
+   procs/01_customer_procs.sql
+   procs/02_order_procs.sql
+   procs/03_shipment_procs.sql
+   procs/04_driver_procs.sql
+   procs/05_billing_procs.sql
+   procs/06_reporting_procs.sql
+   procs/07_batch_procs.sql
+
+2. Create the DB Mail profile "NWLMailProfile" manually in SSMS after install.
+   (script was lost)
+
+3. Create SQL Agent jobs manually:
+   - EOD Job: EXEC NorthwindLogistics.dbo.usp_ProcessEndOfDay, runs 11:30 PM
+   - Index Job: EXEC NorthwindLogistics.dbo.usp_RebuildIndexes, runs Sunday 2 AM
+
+4. App pool identity needs read/write on \\fileserver01\pod\
+
+5. If deploying to new web server:
+   - Install .NET 4.5
+   - Enable Windows Auth in IIS (for debugging, not used by app)
+   - Set app pool to "Classic" pipeline mode
+   - Remember to update web.config for the new environment
+
+CONTACTS (many are no longer here)
+-----------------------------------
+- Original developer: Ryszard Kowalski (retired 2015)
+- DBA 2009-2019: Sanjay Gupta (sgupta@...) - moved to different team
+- Current DBA: James from IT (ext 4400, usually doesn't answer)
+- Business owner: Karen from Operations (karen.m@northwindlogistics.com)
+- "The person who knows where everything is": Nobody since 2019
+
+CHANGE LOG (incomplete, full history in SVN but SVN server was decommissioned)
+-------------------------------------------------------------------------------
+2009-03: Initial version by R.Kowalski
+2010-06: Added reporting procs, T.Wu
+2011-11: Customer audit trigger added
+2012-08: Status migrated from int to varchar (MOST procs updated)
+2013-02: Added DBHelper.cs, K.Patel
+2014-07: Billing procs major update, K.Patel
+2015-03: OrderItems FK removed "for performance"
+2015-09: Archive proc added
+2016-01: LOA driver status added (procs not fully updated)
+2017-04: Hazmat support added, T.Wu
+2018-02: Second web server added
+2018-11: Retry logic removed from DBHelper (was masking errors)
+2019-06: Statement proc rewrite attempted, abandoned
+2020-01: Mobile app decommissioned
+2020-09: Grace Kim and LOA status added
+2021-03: Duplicate invoice fix (PARTIAL - see usp_CompleteShipment comments)
+2021-11: Last update to this document
