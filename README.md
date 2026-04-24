@@ -14,15 +14,21 @@
 
 Scenario 1: Code Modernization — "The Monolith"
 
-## What We Built
+## Our Journey
 
-Northwind Logistics runs on a classic stored-procedure architecture: 40+ T-SQL procs spanning customers, orders, shipments, drivers, billing, reporting, and nightly batch operations, with a thin ASP.NET WebForms shell that is little more than ADO.NET call-forwarding. The original developers are long gone; what remains is `SYSTEM_NOTES.txt`, a handful of undocumented triggers, and tribal knowledge baked into proc naming conventions.
+We worked through the modernisation problem in six deliberate steps, using Claude Code at each stage to accelerate the work without losing architectural rigour.
 
-We generated the full legacy system (schema, seed data, triggers, stored procs, and thin ASP.NET app) as a realistic starting point. From there we applied a strangler-fig decomposition strategy: identify seams in the stored-proc surface, characterize the existing behavior before touching anything, then extract the first clean service behind an API façade — leaving the monolith intact and testable on every commit.
+### Step 1 — Generate the Legacy System
 
-### As-Is Architecture Documentation
+We started with nothing and used Claude Code to generate the full Northwind Logistics monolith from scratch: a 10-table SQL Server schema, 42 stored procedures across 7 business domains, 5 triggers, seed data, and a thin ASP.NET 4.5 WebForms shell wired to the database via ADO.NET. The goal was a realistic "patient" — one that had the same anti-patterns you find in real logistics back-offices: logic in the database, no tests, hardcoded config, and tribal knowledge baked into naming conventions.
 
-Full architecture analysis is in [`docs/architecture/as-is/`](docs/architecture/as-is/):
+The legacy system lives in [`lagacy/`](lagacy/).
+
+### Step 2 — Document the As-Is Architecture
+
+With the legacy system in place, we used Claude Code to perform a static analysis of the codebase and produce structured architecture documentation — before touching a single line. This gave the team a shared map of what the system actually does, including the bugs and the coupling that make extraction hard.
+
+Full analysis in [`docs/architecture/as-is/`](docs/architecture/as-is/):
 
 | Document | Contents |
 |---|---|
@@ -32,21 +38,33 @@ Full architecture analysis is in [`docs/architecture/as-is/`](docs/architecture/
 | [`business-flows.md`](docs/architecture/as-is/business-flows.md) | Order lifecycle, pricing formula, EOD batch, billing flow |
 | [`known-issues.md`](docs/architecture/as-is/known-issues.md) | Security vulns, data integrity bugs, performance problems, tech debt |
 
-### To-Be Architecture
+### Step 3 — Design the To-Be Architecture
 
-Target state for the strangler-fig decomposition is in [`docs/architecture/to-be/overview.md`](docs/architecture/to-be/overview.md): extraction order (Pricing → Reporting → Customer → Order → Billing → Dispatch → Batch), anti-corruption layer design, tech choices, and explicit non-goals.
+With the as-is understood, we used Claude Code to design the target state: 6 domain services, each with its own database, communicating via an event bus, behind an API gateway. The strangler-fig pattern was chosen over a big-bang rewrite — the system runs 24/7 and cannot go dark. The extraction order was ranked by coupling risk, lowest first. Rationale was captured as ADR-001 before any implementation work was scoped.
 
-### Project Plan
+Target state in [`docs/architecture/to-be/overview.md`](docs/architecture/to-be/overview.md). Decision rationale in [`decisions/ADR-001-strangler-fig-decomposition.md`](decisions/ADR-001-strangler-fig-decomposition.md).
 
-Full strangler-fig execution plan in [`docs/project-plan.md`](docs/project-plan.md): all 8 phases with tasks, defects being fixed, and exit criteria per phase. ADR register (ADR-001 accepted; ADR-002 through ADR-009 planned, one per extraction phase).
+### Step 4 — Generate the Functional Spec
 
-### Product Backlog
+Before planning any work we needed a precise record of what the system does today — including its bugs — that could serve as the baseline for characterization tests. Claude Code performed a deep static analysis of all 42 procs and 5 triggers and produced a complete functional spec: every business capability, every proc, every trigger side-effect, and 10 explicit behavioural constraints that tests must pin before extraction begins.
 
-86 user stories across 10 features in [`docs/backlog/`](docs/backlog/). Each story has a role, description, and testable acceptance criteria. Features map 1:1 to project plan phases; stories map 1:1 to plan tasks.
+Spec in [`spec/current-functionality.md`](spec/current-functionality.md).
+
+### Step 5 — Create the Project Plan
+
+With the functional spec as input, we used Claude Code to derive an 8-phase strangler-fig execution plan: Phase 0 (Safety Net / characterization tests) through Phase 7 (Batch Retirement), plus two cross-cutting tracks (ACL & The Fence, Security). Each phase lists the procs being extracted, the defects being fixed by design, and a concrete exit criterion that must be met before the next phase starts.
+
+Plan in [`docs/project-plan.md`](docs/project-plan.md).
+
+### Step 6 — Generate the Product Backlog
+
+Finally, we used Claude Code to decompose the project plan into a full product backlog: 10 features (one per phase), 86 user stories (one per task), each with a role, description, and specific testable acceptance criteria. Five parallel agents generated the backlog simultaneously, one agent per two features, in under 10 minutes.
+
+Backlog in [`docs/backlog/`](docs/backlog/):
 
 | Feature | Stories |
 |---|---|
-| [Feature 0 — Safety Net](docs/backlog/feature-0-safety-net/) | US-001–009: Docker Compose, CI, connection-string fix, characterisation tests per domain |
+| [Feature 0 — Safety Net](docs/backlog/feature-0-safety-net/) | US-001–009: Docker Compose, CI, connection-string fix, characterization tests per domain |
 | [Feature 1 — Pricing Service](docs/backlog/feature-1-pricing-service/) | US-101–110: ADR, OpenAPI, scaffold, schema, logic, shadow mode, ACL adapter, cut-over |
 | [Feature 2 — Reporting Service](docs/backlog/feature-2-reporting-service/) | US-201–208: ADR, 5 report endpoints, temp-table fix, cut-over |
 | [Feature 3 — Customer Service](docs/backlog/feature-3-customer-service/) | US-301–309: ADR, ACL adapter, `CurrentBalance` boundary, PreToolUse hook, cut-over |
