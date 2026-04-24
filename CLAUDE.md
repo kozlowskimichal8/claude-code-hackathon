@@ -55,6 +55,14 @@ These are documented bugs — relevant context before refactoring:
 - **Duplicate invoices** if `usp_CompleteShipment` is called twice (idempotency not enforced)
 - **`usp_GenerateMonthlyStatements`** takes ~45 seconds (cursor-based; needs set-based rewrite)
 
+## Spec Folder
+
+**[spec/](spec/)** contains static-analysis documents derived from the legacy codebase — written before any extraction work begins.
+
+- **[spec/current-functionality.md](spec/current-functionality.md)** — Complete documentation of what the system does today: all 7 business capability domains (customer, order, dispatch, shipment, billing, reporting, batch), all 42 stored procs, 5 triggers, web pages, data model, and 10 behavioural constraints that characterization tests must pin. Also includes a seam-candidate table ranked by extraction risk, ready to feed into The Map ADR.
+
+> Do not treat this file as a source of truth for the codebase — read the SQL and C# directly. Use it as orientation and as a checklist of behaviours to verify before touching anything.
+
 ## No Automated Build or Test Infrastructure
 
 There are no `package.json`, `Makefile`, `Dockerfile`, or test suites. The legacy app was deployed manually. Any CI/CD, containerization, or test harness you introduce will be new work.
