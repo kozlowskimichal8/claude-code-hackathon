@@ -20,9 +20,21 @@ The hackathon emphasizes depth over breadth. Judges read commit history, so mean
 8. **The Weekend** *(stretch)* — Cutover runbook for ops at 3am: steps, rollback triggers, decision tree.
 9. **The Scouts** *(stretch, agentic)* — Fan-out risk analysis using Task subagents, one per candidate seam, aggregated into a ranked list. Pass scope explicitly in each Task prompt.
 
-## Legacy Application Architecture
+## Architecture Decision Records
 
-Full as-is architecture analysis lives in **[`docs/architecture/as-is/`](docs/architecture/as-is/)**. Read those documents before making any changes to the legacy system. Summary below.
+All significant decisions — tech stack choices, service extraction order, cross-cutting concerns, trade-offs with rejected alternatives — **must be recorded as an ADR before implementation begins**. No ADR = no implementation.
+
+ADRs live in **[`decisions/`](decisions/)** and follow the naming convention `ADR-NNN-kebab-case-title.md`.
+
+| ADR | Status | Decision |
+|---|---|---|
+| [ADR-001](decisions/ADR-001-strangler-fig-decomposition.md) | Accepted | Strangler-fig decomposition into 6 domain services |
+
+When creating a new ADR, copy the structure from ADR-001: context, decision, extraction/implementation sequence, consequences (positive and negative), risks, and an explicit "what we chose not to do" section.
+
+## Legacy Application Architecture (As-Is)
+
+Full as-is architecture analysis lives in **[`docs/architecture/as-is/`](docs/architecture/as-is/)**. Read these before making any changes to the legacy system.
 
 | Document | What it covers |
 |---|---|
@@ -33,6 +45,12 @@ Full as-is architecture analysis lives in **[`docs/architecture/as-is/`](docs/ar
 | [`known-issues.md`](docs/architecture/as-is/known-issues.md) | Security vulns, data integrity bugs, performance problems, tech debt |
 
 The legacy app is a **database-centric ASP.NET 4.5 WebForms monolith** with SQL Server 2008 R2. About 80% of business logic lives in T-SQL stored procedures, not in application code.
+
+## Target Architecture (To-Be)
+
+The strangler-fig decomposition into 6 domain services is documented in **[`docs/architecture/to-be/overview.md`](docs/architecture/to-be/overview.md)**. Extraction order, ACL design, tech choices, and explicit non-goals are all there.
+
+The rationale and trade-offs: **[`decisions/ADR-001-strangler-fig-decomposition.md`](decisions/ADR-001-strangler-fig-decomposition.md)**.
 
 ### Key layers
 

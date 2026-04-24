@@ -32,6 +32,10 @@ Full architecture analysis is in [`docs/architecture/as-is/`](docs/architecture/
 | [`business-flows.md`](docs/architecture/as-is/business-flows.md) | Order lifecycle, pricing formula, EOD batch, billing flow |
 | [`known-issues.md`](docs/architecture/as-is/known-issues.md) | Security vulns, data integrity bugs, performance problems, tech debt |
 
+### To-Be Architecture
+
+Target state for the strangler-fig decomposition is in [`docs/architecture/to-be/overview.md`](docs/architecture/to-be/overview.md): extraction order (Pricing → Reporting → Customer → Order → Billing → Dispatch → Batch), anti-corruption layer design, tech choices, and explicit non-goals.
+
 ## Challenges Attempted
 
 | # | Challenge | Status | Notes |
@@ -46,15 +50,21 @@ Full architecture analysis is in [`docs/architecture/as-is/`](docs/architecture/
 | 8 | The Weekend | skipped | |
 | 9 | The Scouts | skipped | |
 
+## Architecture Decision Records
+
+Significant decisions are recorded as ADRs in [`decisions/`](decisions/) before implementation. Each ADR covers: context, the decision, consequences (positive and negative), risks, and what was explicitly rejected.
+
+| ADR | Status | Decision |
+|---|---|---|
+| [ADR-001](decisions/ADR-001-strangler-fig-decomposition.md) | Accepted | Strangler-fig decomposition into 6 domain services |
+
 ## Key Decisions
 
 **Stored-proc flavor over PHP/Java** — The stored-proc architecture most faithfully represents the "logic lives in the database" anti-pattern common in logistics and finance back-offices. It makes seam identification harder and more interesting: you can't just split files, you have to reason about data coupling across proc groups.
 
-**Strangler fig over big-bang rewrite** — The board said "modernize," not "rewrite." Strangler fig lets us ship value incrementally and keep the legacy running as a fallback, which is the only realistic option for a 24/7 logistics operation.
+**Strangler fig over big-bang rewrite** — The board said "modernize," not "rewrite." Strangler fig lets us ship value incrementally and keep the legacy running as a fallback, which is the only realistic option for a 24/7 logistics operation. See [ADR-001](decisions/ADR-001-strangler-fig-decomposition.md).
 
 **Three-level CLAUDE.md** — User-level for personal preferences, project-level for shared codebase conventions, and a `lagacy/` directory-level file so Claude understands the legacy constraints (no refactoring of procs without a characterization test, never break the thin-shell contract).
-
-See `/decisions/` for full ADRs (to be added).
 
 ## How to Run It
 
