@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git -C C:/EDF/git/claude-code-hackathon status)",
+      "Bash(git -C C:/EDF/git/claude-code-hackathon log --oneline -3)",
+      "Bash(git -C C:/EDF/git/claude-code-hackathon add README.md)",
+      "Bash(git -C C:/EDF/git/claude-code-hackathon commit -m ' *)",
+      "Bash(git *)"
+    ]
+  }
+}

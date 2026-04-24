@@ -14,7 +14,7 @@
 
 Scenario 1: Code Modernization — "The Monolith"
 
-## Our Journey
+## What we Built
 
 We worked through the modernisation problem in six deliberate steps, using Claude Code at each stage to accelerate the work without losing architectural rigour.
 
